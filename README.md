@@ -3,7 +3,7 @@
 ## `dstats`
 Docker stats dashboard for your terminal.
 
-![woooo](http://s3.j3ss.co/screenshots/2015-01-23-01-04-36_2880x1800.png)
+![woooo](ss.png)
 
 ```console
 # run a container named `stress`
