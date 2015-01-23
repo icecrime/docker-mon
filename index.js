@@ -47,7 +47,7 @@ parse(function(containers) {
         return cli.err("No containers.")
     }
 
-    cli.info("Got containers: " + containers);
+    cli.debug("Got containers: " + containers);
     
     // create the grid
     var grid;
@@ -65,14 +65,14 @@ parse(function(containers) {
                 text: "green", 
                 baseline: "black"
             },
-            xLabelPadding: 3, 
-            xPadding: 5, 
+            yLabelPadding: 3, 
+            yPadding: 40, 
             label: 'cpu'
         });
         
         grid.applyLayout(screen);
 
-        var line = grid.get(0, 0)
+        var line = grid.get(0, 0);
         
         screen.key(['escape', 'q', 'C-c'], function(ch, key) {
             return process.exit(0);
@@ -80,7 +80,6 @@ parse(function(containers) {
 
         screen.render();
 
-        utils.GetStats(host, el, line);
-        
+        utils.GetStats(host, el, line, screen);
     });
 });

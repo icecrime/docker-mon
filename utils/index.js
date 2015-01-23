@@ -38,17 +38,18 @@ function GetAllContainers(host, func) {
     });
 };
 
-function StatsStream(el, line, options) {
+function StatsStream(el, line, screen, options) {
     // allow use without new operator
     if (!(this instanceof StatsStream)) {
         return new StatsStream(el, options);
     }
 
     Writable.call(this, options);
-    this.el = el;
-    this.line = line;
-    this.x = [];
-    this.y = [];
+    this.el     = el;
+    this.line   = line;
+    this.screen = screen;
+    this.x      = [];
+    this.y      = [];
 };
 util.inherits(StatsStream, Writable);
 StatsStream.prototype._write = function (chunk, enc, cb) {
@@ -60,19 +61,29 @@ StatsStream.prototype._write = function (chunk, enc, cb) {
             return cb();
         }
 
+        if (this.x.length > 10) {
+            this.x.shift();
+        }
+
+        if (this.y.length > 10) {
+            this.y.shift();
+        }
+
         // append the chunk values
-        this.x = (new Date).getTime();
-        this.y = chunk.cpu_stats.cpu_usage.total_usage;
+        var now = new Date();
+        this.x.push(now.getUTCHours() + ':' + now.getUTCMinutes() + ':' + now.getUTCSeconds() + ':' + now.getUTCMilliseconds());
+        this.y.push(chunk.cpu_stats.cpu_usage.total_usage);
 
         // set the data
         this.line.setData(this.x, this.y);
+        // render
+        this.screen.render();
 
         return cb();
 };
 
-function GetStats(host, el, line) {
-    
-    var sstream = new StatsStream(el, line);
+function GetStats(host, el, line, screen) {
+    var sstream = new StatsStream(el, line, screen);
     
     sstream.on('finish', function () {
         console.log('finished writing for', el);
