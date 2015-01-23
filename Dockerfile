@@ -6,4 +6,4 @@ WORKDIR /usr/src
 
 RUN npm install && npm link
 
-#ENTRYPOINT [ "dstats" ]
+ENTRYPOINT [ "dstats" ]
