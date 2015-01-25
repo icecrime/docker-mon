@@ -8,8 +8,8 @@ Console-based Docker monitoring based on [blessed-contrib](https://github.com/ya
 Please note:
 
 - It is **work in progress**
-- It relies on the yet to be released [`docker stats` feature](https://github.com/docker/docker/pull/9984): you will need master build of Docker or the upcoming v1.5.0 (see the [announcement for v1.5.0-rc1](https://groups.google.com/d/msg/docker-dev/nzKREJKqxe4/nsc9tkTLkccJ) for links to the binaries)
-- [I don't know JS](http://i.imgur.com/xVyoSl.jpg), so contributions are welcome (see:p
+- It relies on the yet to be released [`docker stats` feature](https://github.com/docker/docker/pull/9984): you will need either a [master build](https://master.dockerproject.com/) or the upcoming v1.5.0 (see the [announcement for v1.5.0-rc1](https://groups.google.com/d/msg/docker-dev/nzKREJKqxe4/nsc9tkTLkccJ))
+- [I don't know JS](http://i.imgur.com/xVyoSl.jpg), so contributions are welcome (see below for ideas)!
 
 # Usage
 
