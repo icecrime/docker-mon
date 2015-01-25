@@ -2,12 +2,12 @@
 
 // dependencies
 var cli     = require('cli'),
-    request = require('request')
+    request = require('request'),
     utils   = require('./utils'),
+    widgets = require('./widgets'),
 
     blessed  = require('blessed'),
     contrib  = require('blessed-contrib'),
-    moment   = require('moment'),
     screen   = blessed.screen();
 
 // enable status
@@ -28,12 +28,12 @@ if (isUnixSocket && host.substring(0, 8) == "unix:///") {
 }
 
 // parse command line arguments
-var parse = function(func){
+var parse = function (func){
     if (cli.args.length) {
         return func(cli.args);
     }
 
-    utils.GetAllContainers(host, function(err, containers){
+    utils.GetAllContainers(host, function (err, containers){
         if (err) {
             return cli.err(err);
         }
@@ -42,27 +42,7 @@ var parse = function(func){
     });
 };
 
-var cpuPointBuilder = function(statItem) {
-    var cpuPercent = 0.0
-    var cpuDelta = statItem.cpu_stats.cpu_usage.total_usage - this.previousCpu
-    var systemDelta = statItem.cpu_stats.system_cpu_usage - this.previousSystem
-    if (systemDelta > 0.0 && cpuDelta > 0.0) {
-        cpuPercent = (cpuDelta / systemDelta) * statItem.cpu_stats.cpu_usage.percpu_usage.length * 100.0
-    }
-
-    this.previousCpu = statItem.cpu_stats.cpu_usage.total_usage
-    this.previousSystem = statItem.cpu_stats.system_cpu_usage
-
-    return {
-        x: moment(statItem.read).format("HH:mm:ss"),
-        y: cpuPercent
-    }
-}
-
-cpuPointBuilder.previousCpu    = 0.0
-cpuPointBuilder.previousSystem = 0.0
-
-var fetchContainerDetails = function(containerID, detailBox) {
+var fetchContainerDetails = function (containerID, detailBox) {
     request({
         json: true,
         method: 'GET',
@@ -84,7 +64,7 @@ var fetchContainerDetails = function(containerID, detailBox) {
 }
 
 // Get the containers.
-parse(function(containers) {
+parse(function (containers) {
     if (containers.length <= 0){
         return cli.err("No containers.")
     }
@@ -102,16 +82,22 @@ parse(function(containers) {
         scrollable: true
     })
 
-    var bottomGrid = new contrib.grid({rows: 1, cols: 1})
+    var bottomGrid = new contrib.grid({rows: 1, cols: 2})
     bottomGrid.set(0, 0, contrib.line, {
         label: "CPU %",
         maxY: 100,
+        showNthLabel: 5,
+        xPadding: 0,
+        xLabelPadding: 0
     })
 
-    //var gaugesGrid = new contrib.grid({rows: 2, cols: 1})
-    //gaugesGrid.set(0, 0, contrib.gauge, {label: "CPU %"})
-    //gaugesGrid.set(1, 0, contrib.gauge, {label: "MEM %"})
-    //bottomGrid.set(0, 1, gaugesGrid)
+    var gaugesGrid = new contrib.grid({rows: 3, cols: 1})
+    gaugesGrid.set(0, 0, contrib.gauge, {label: "CPU %"})
+    gaugesGrid.set(1, 0, contrib.gauge, {label: "MEM %"})
+    gaugesGrid.set(2, 0, blessed.box, {
+        label: "Network"
+    })
+    bottomGrid.set(0, 1, gaugesGrid)
 
     // Create global grid layout.
     var globalGrid = new contrib.grid({rows: 2, cols: 1})
@@ -119,8 +105,12 @@ parse(function(containers) {
     globalGrid.set(1, 0, bottomGrid)
     globalGrid.applyLayout(screen);
 
-    // Name lines widgets.
+    // Name widgets.
     var cpuLine = bottomGrid.get(0, 0)
+    var cpuGauge = gaugesGrid.get(0, 0)
+    var memGauge = gaugesGrid.get(1, 0)
+    var networkIOBox = gaugesGrid.get(2, 0)
+    cpuLine.canvasSize.width -= 3 // No overflowing the X labels
 
     // Create container detail view.
     var containerDetailBox = upperGrid.get(0, 1)
@@ -129,24 +119,40 @@ parse(function(containers) {
     var containersTable = upperGrid.get(0, 0)
     containersTable.setData({
         headers: ["ID", "Names", "Image"],
-        data: containers.map(function(el) {
+        data: containers.map(function (el) {
             return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
         })
     })
-    containersTable.rows.on("select", function(item) {
+    containersTable.rows.on("select", function (item) {
         // Get container data, update detail view.
         var containerData = containers[containersTable.rows.getItemIndex(item)]
         fetchContainerDetails(containerData.Id, containerDetailBox)
 
         // Clear graphs and start collecting container stats.
-        cpuLine.setData([], [])
-        utils.GetStats(host, containerData.Id, cpuLine, screen, cpuPointBuilder)
+        var elements = [
+            new widgets.CPUPercentageLine(cpuLine),
+            new widgets.CPUGauge(cpuGauge),
+            new widgets.MEMGauge(memGauge),
+            new widgets.NetworkIO(networkIOBox)
+        ]
+        utils.GetStats(host, containerData.Id, function (statItem) {
+            elements.map(function (el) { el.update(statItem) })
+            screen.render()
+        })
     })
     containersTable.focus()
 
-    // Render screen.
-    screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+    // Key bindings.
+    screen.key('j', function (ch, key) {
+        containerDetailBox.setScrollPerc(containerDetailBox.getScrollPerc() + 10)
+    });
+    screen.key('k', function (ch, key) {
+        containerDetailBox.setScrollPerc(containerDetailBox.getScrollPerc() - 10)
+    });
+    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
         return process.exit(0)
     });
+
+    // Render screen.
     screen.render();
 });

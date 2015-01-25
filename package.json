@@ -1,0 +1,28 @@
+{
+  "name": "docker-mon",
+  "version": "0.1.0",
+  "description": "Console based Docker monitoring",
+  "main": "index.js",
+  "bin": {
+    "docker-mon": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/icecrime/docker-mon"
+  },
+  "author": "Arnaud Porterie",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/icecrime/docker-mon/issues"
+  },
+  "homepage": "https://github.com/icecrime/docker-mon",
+  "dependencies": {
+    "blessed": "0.0.38",
+    "blessed-contrib": "0.0.4",
+    "cli": "^0.6.5",
+    "humanize": "0.0.9",
+    "mime-db": "1.5.0",
+    "moment": "2.9.0",
+    "request": "^2.51.0"
+  }
+}

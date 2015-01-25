@@ -37,19 +37,15 @@ function GetAllContainers(host, func) {
     });
 };
 
-function StatsStream(el, line, screen, pointBuilder, options) {
+function StatsStream(el, statsCb, options) {
     // allow use without new operator
     if (!(this instanceof StatsStream)) {
         return new StatsStream(el, options);
     }
 
     Writable.call(this, options);
-    this.el           = el;
-    this.line         = line;
-    this.screen       = screen;
-    this.pointBuilder = pointBuilder
-    this.x            = [];
-    this.y            = [];
+    this.el      = el;
+    this.statsCb = statsCb
 };
 util.inherits(StatsStream, Writable);
 StatsStream.prototype._write = function (chunk, enc, cb) {
@@ -61,38 +57,21 @@ StatsStream.prototype._write = function (chunk, enc, cb) {
             return cb();
         }
 
-        if (this.x.length > 10) {
-            this.x.shift();
-        }
-
-        if (this.y.length > 10) {
-            this.y.shift();
-        }
-
-        // append the chunk values
-        var pointData = this.pointBuilder(chunk)
-        this.x.push(pointData.x)
-        this.y.push(pointData.y)
-
-        // set the data
-        this.line.setData(this.x, this.y);
-        // render
-        this.screen.render();
-
+        this.statsCb(chunk);
         return cb();
 };
 
-function GetStats(host, el, line, screen, pointBuilder) {
-    var sstream = new StatsStream(el, line, screen, pointBuilder);
+function GetStats(host, containerID, statsCb) {
+    var sstream = new StatsStream(containerID, statsCb);
 
     sstream.on('finish', function () {
-        console.log('finished writing for', el);
+        console.log('finished writing for', containerID);
     });
 
     request({
         json:   true,
         method: 'GET',
-        uri:    host + '/containers/' + el + '/stats'
+        uri:    host + '/containers/' + containerID + '/stats'
     }).pipe(sstream);
 };
 
