@@ -26,7 +26,7 @@ CPUPercentageLine = function (lineWidget) {
 }
 
 CPUPercentageLine.prototype.update = function (statItem) {
-    var maxDataPoints = 60
+    var maxDataPoints = 10
     if (this.x.length > maxDataPoints) {
         this.x.shift();
     }

@@ -73,7 +73,7 @@ parse(function (containers) {
     var upperGrid = new contrib.grid({rows: 1, cols: 2})
     upperGrid.set(0, 0, contrib.table, {
         columnSpacing: [14, 32, 10],
-        label: "Running containers (use arrows and enter to select)",
+        label: "Running containers (use arrows/enter to select)",
         parent: screen // workaround a blessed bug
     })
     upperGrid.set(0, 1, blessed.box, {
