@@ -9,4 +9,4 @@ Console-based Docker monitoring based on [blessed-contrib](https://github.com/ya
 
 # Screenshots
 
-![sample](screenshots/screen1.png)
+![sample](screenshots/screen2.png)
