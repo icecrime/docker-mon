@@ -3,7 +3,7 @@ Docker-mon
 
 Console Docker monitoring based on [blessed-contrib](https://github.com/yaronn/blessed-contrib).
 
-![sample](screenshots/screen3.png)
+![sample](screenshots/screen.png)
 
 Please note:
 

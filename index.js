@@ -77,6 +77,7 @@ parse(function (containers) {
         parent: screen // workaround a blessed bug
     })
     upperGrid.set(0, 1, blessed.box, {
+        fg: "green",
         label: "Container details",
         scrollable: true
     })
@@ -85,9 +86,11 @@ parse(function (containers) {
     bottomGrid.set(0, 0, contrib.line, {
         label: "CPU %",
         maxY: 100,
-        showNthLabel: 5,
-        xPadding: 0,
-        xLabelPadding: 0
+        showNthLabel: 10,
+        style: {
+            baseline: "white"
+        },
+        xPadding: 0
     })
 
     var gaugesGrid = new contrib.grid({rows: 1, cols: 2})
@@ -97,6 +100,7 @@ parse(function (containers) {
     var bottomRightGrid = new contrib.grid({rows: 2, cols: 1})
     bottomRightGrid.set(0, 0, gaugesGrid)
     bottomRightGrid.set(1, 0, blessed.box, {
+        fg: "green",
         label: "Network",
         padding: {
             left: 1
@@ -116,7 +120,7 @@ parse(function (containers) {
     var cpuGauge = gaugesGrid.get(0, 0)
     var memGauge = gaugesGrid.get(0, 1)
     var networkBox = bottomRightGrid.get(1, 0)
-    cpuLine.canvasSize.width -= 10 // workaround to avoid overflowing the X labels
+    cpuLine.canvasSize.width -= 12 // workaround to avoid overflowing the X labels
 
     // Create container detail view
     var containerDetailBox = upperGrid.get(0, 1)

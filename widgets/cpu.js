@@ -34,8 +34,9 @@ CPUPercentageLine.prototype.update = function (statItem) {
         this.y.shift();
     }
 
+    var cpuPercent = calculateCPUPercent(statItem, this.previousCpu, this.previousSystem)
     this.x.push(moment(statItem.read).format("HH:mm:ss"))
-    this.y.push(calculateCPUPercent(statItem, this.previousCpu, this.previousSystem))
+    this.y.push(cpuPercent)
 
     this.previousCpu = statItem.cpu_stats.cpu_usage.total_usage
     this.previousSystem = statItem.cpu_stats.system_cpu_usage
