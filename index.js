@@ -35,7 +35,7 @@ var parse = function (func){
 
     utils.GetAllContainers(host, function (err, containers){
         if (err) {
-            return cli.err(err);
+            return cli.error(err);
         }
 
         return func(containers);
@@ -66,7 +66,7 @@ var fetchContainerDetails = function (containerID, detailBox) {
 // Get the containers.
 parse(function (containers) {
     if (containers.length <= 0){
-        return cli.err("No containers.")
+        return cli.error("No containers.")
     }
 
     // Create upper nested grid.
