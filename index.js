@@ -48,7 +48,7 @@ var fetchContainerDetails = function (containerID, detailBox) {
         method: 'GET',
         uri: host + '/containers/' + containerID + '/json'
     }, function(err, resp, body) {
-        detailBox.setLabel("Container details: " + containerID.substr(0, 8))
+        detailBox.setLabel("Container details: " + containerID.substr(0, 8) + " (use j/k to scroll)")
 
         if (err) {
             return detailBox.setText("Error fetching container info: " + err)
@@ -63,21 +63,20 @@ var fetchContainerDetails = function (containerID, detailBox) {
     })
 }
 
-// Get the containers.
+// Get the containers
 parse(function (containers) {
     if (containers.length <= 0){
         return cli.error("No containers.")
     }
 
-    // Create upper nested grid.
+    // Create upper nested grid
     var upperGrid = new contrib.grid({rows: 1, cols: 2})
     upperGrid.set(0, 0, contrib.table, {
         columnSpacing: [14, 32, 10],
-        label: "Running containers",
+        label: "Running containers (use arrows and enter to select)",
         parent: screen // workaround a blessed bug
     })
     upperGrid.set(0, 1, blessed.box, {
-        fg: "green",
         label: "Container details",
         scrollable: true
     })
@@ -91,31 +90,38 @@ parse(function (containers) {
         xLabelPadding: 0
     })
 
-    var gaugesGrid = new contrib.grid({rows: 3, cols: 1})
+    var gaugesGrid = new contrib.grid({rows: 1, cols: 2})
     gaugesGrid.set(0, 0, contrib.gauge, {label: "CPU %"})
-    gaugesGrid.set(1, 0, contrib.gauge, {label: "MEM %"})
-    gaugesGrid.set(2, 0, blessed.box, {
-        label: "Network"
-    })
-    bottomGrid.set(0, 1, gaugesGrid)
+    gaugesGrid.set(0, 1, contrib.gauge, {label: "MEM %"})
 
-    // Create global grid layout.
+    var bottomRightGrid = new contrib.grid({rows: 2, cols: 1})
+    bottomRightGrid.set(0, 0, gaugesGrid)
+    bottomRightGrid.set(1, 0, blessed.box, {
+        label: "Network",
+        padding: {
+            left: 1
+        }
+    })
+
+    bottomGrid.set(0, 1, bottomRightGrid)
+
+    // Create global grid layout
     var globalGrid = new contrib.grid({rows: 2, cols: 1})
     globalGrid.set(0, 0, upperGrid)
     globalGrid.set(1, 0, bottomGrid)
     globalGrid.applyLayout(screen);
 
-    // Name widgets.
+    // Name widgets
     var cpuLine = bottomGrid.get(0, 0)
     var cpuGauge = gaugesGrid.get(0, 0)
-    var memGauge = gaugesGrid.get(1, 0)
-    var networkIOBox = gaugesGrid.get(2, 0)
-    cpuLine.canvasSize.width -= 3 // No overflowing the X labels
+    var memGauge = gaugesGrid.get(0, 1)
+    var networkBox = bottomRightGrid.get(1, 0)
+    cpuLine.canvasSize.width -= 10 // workaround to avoid overflowing the X labels
 
-    // Create container detail view.
+    // Create container detail view
     var containerDetailBox = upperGrid.get(0, 1)
 
-    // Create container list.
+    // Create container list
     var containersTable = upperGrid.get(0, 0)
     containersTable.setData({
         headers: ["ID", "Names", "Image"],
@@ -124,16 +130,16 @@ parse(function (containers) {
         })
     })
     containersTable.rows.on("select", function (item) {
-        // Get container data, update detail view.
+        // Get container data, update detail view
         var containerData = containers[containersTable.rows.getItemIndex(item)]
         fetchContainerDetails(containerData.Id, containerDetailBox)
 
-        // Clear graphs and start collecting container stats.
+        // Clear graphs and start collecting container stats
         var elements = [
             new widgets.CPUPercentageLine(cpuLine),
             new widgets.CPUGauge(cpuGauge),
             new widgets.MEMGauge(memGauge),
-            new widgets.NetworkIO(networkIOBox)
+            new widgets.NetworkIO(networkBox)
         ]
         utils.GetStats(host, containerData.Id, function (statItem) {
             elements.map(function (el) { el.update(statItem) })
@@ -142,7 +148,7 @@ parse(function (containers) {
     })
     containersTable.focus()
 
-    // Key bindings.
+    // Key bindings
     screen.key('j', function (ch, key) {
         containerDetailBox.setScrollPerc(containerDetailBox.getScrollPerc() + 10)
     });
@@ -153,6 +159,6 @@ parse(function (containers) {
         return process.exit(0)
     });
 
-    // Render screen.
+    // Render screen
     screen.render();
 });
