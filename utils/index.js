@@ -19,37 +19,37 @@ function GetAllContainers(host, func) {
         if (err) {
             return func(err, containers);
         }
-    
+
         if (resp.statusCode != 200) {
-            i// cli.debug("Server response:", resp);
             return func(new Error("Status from server was: " + resp.statusCode), containers);
         }
-        
+
         if (body.length <= 0) {
             return func(new Error("You have no containers currently.", containers))
         }
-        
+
         var containers
         body.forEach(function(el) {
-            containers.push(el.Id);
+            containers.push(el)
         });
 
         return func(err, containers);
     });
 };
 
-function StatsStream(el, line, screen, options) {
+function StatsStream(el, line, screen, pointBuilder, options) {
     // allow use without new operator
     if (!(this instanceof StatsStream)) {
         return new StatsStream(el, options);
     }
 
     Writable.call(this, options);
-    this.el     = el;
-    this.line   = line;
-    this.screen = screen;
-    this.x      = [];
-    this.y      = [];
+    this.el           = el;
+    this.line         = line;
+    this.screen       = screen;
+    this.pointBuilder = pointBuilder
+    this.x            = [];
+    this.y            = [];
 };
 util.inherits(StatsStream, Writable);
 StatsStream.prototype._write = function (chunk, enc, cb) {
@@ -70,9 +70,9 @@ StatsStream.prototype._write = function (chunk, enc, cb) {
         }
 
         // append the chunk values
-        var now = new Date();
-        this.x.push(now.getUTCHours() + ':' + now.getUTCMinutes() + ':' + now.getUTCSeconds() + ':' + now.getUTCMilliseconds());
-        this.y.push(chunk.cpu_stats.cpu_usage.total_usage);
+        var pointData = this.pointBuilder(chunk)
+        this.x.push(pointData.x)
+        this.y.push(pointData.y)
 
         // set the data
         this.line.setData(this.x, this.y);
@@ -82,9 +82,9 @@ StatsStream.prototype._write = function (chunk, enc, cb) {
         return cb();
 };
 
-function GetStats(host, el, line, screen) {
-    var sstream = new StatsStream(el, line, screen);
-    
+function GetStats(host, el, line, screen, pointBuilder) {
+    var sstream = new StatsStream(el, line, screen, pointBuilder);
+
     sstream.on('finish', function () {
         console.log('finished writing for', el);
     });
@@ -93,7 +93,7 @@ function GetStats(host, el, line, screen) {
         json:   true,
         method: 'GET',
         uri:    host + '/containers/' + el + '/stats'
-    }).pipe(sstream);  
+    }).pipe(sstream);
 };
 
 exports.GetAllContainers = GetAllContainers;

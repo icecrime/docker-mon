@@ -1,17 +1,12 @@
-**THIS IS A WIP**
+Docker-mon
+----------
 
-## `dstats`
-Docker stats dashboard for your terminal.
+Console-based Docker monitoring based on [blessed-contrib](https://github.com/yaronn/blessed-contrib).
 
-![woooo](ss.png)
+# Usage
 
-```console
-# run a container named `stress`
-$ docker run --rm -it --name stress \
-    jess/stress --cpu 1 --io 1 --vm 1 --vm-bytes 128M
+    $ docker build -t docker-mon . && docker run --rm -ti -v /var/run/docker.sock:/var/run/docker.sock docker-mon
 
-# run a graph on that container
-$ docker run -it \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    jess/dstats [CONTAINER_NAME]
-```
+# Screenshots
+
+![sample](screenshots/screen1.png)
