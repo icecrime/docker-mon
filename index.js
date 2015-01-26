@@ -69,17 +69,29 @@ parse(function (containers) {
         return cli.error("No containers.")
     }
 
+    var borderColor = "cyan"
+    var labelStyle = {
+        fg: "white",
+        bold: true
+    }
+
     // Create upper nested grid
     var upperGrid = new contrib.grid({rows: 1, cols: 2})
     upperGrid.set(0, 0, contrib.table, {
         columnSpacing: [14, 32, 10],
         label: "Running containers (use arrows/enter to select)",
-        parent: screen // workaround a blessed bug
+        parent: screen, // workaround a blessed bug
+        style: {
+            label: labelStyle
+        }
     })
     upperGrid.set(0, 1, blessed.box, {
-        fg: "green",
+        fg: "default",
         label: "Container details",
-        scrollable: true
+        scrollable: true,
+        style: {
+            label: labelStyle
+        }
     })
 
     var bottomGrid = new contrib.grid({rows: 1, cols: 2})
@@ -88,22 +100,36 @@ parse(function (containers) {
         maxY: 100,
         showNthLabel: 10,
         style: {
-            baseline: "white"
-        },
-        xPadding: 0
+            baseline: "white",
+            label: labelStyle,
+            line: "yellow",
+            text: "white"
+        }
     })
 
     var gaugesGrid = new contrib.grid({rows: 1, cols: 2})
-    gaugesGrid.set(0, 0, contrib.gauge, {label: "CPU %"})
-    gaugesGrid.set(0, 1, contrib.gauge, {label: "MEM %"})
+    gaugesGrid.set(0, 0, contrib.gauge, {
+        label: "CPU %",
+        style: {
+            label: labelStyle
+        }
+    })
+    gaugesGrid.set(0, 1, contrib.gauge, {
+        label: "MEM %",
+        style: {
+            label: labelStyle
+        }
+    })
 
     var bottomRightGrid = new contrib.grid({rows: 2, cols: 1})
     bottomRightGrid.set(0, 0, gaugesGrid)
     bottomRightGrid.set(1, 0, blessed.box, {
-        fg: "green",
         label: "Network",
         padding: {
             left: 1
+        },
+        style: {
+            label: labelStyle
         }
     })
 
@@ -120,10 +146,16 @@ parse(function (containers) {
     var cpuGauge = gaugesGrid.get(0, 0)
     var memGauge = gaugesGrid.get(0, 1)
     var networkBox = bottomRightGrid.get(1, 0)
+
+    cpuLine.border.style.fg = borderColor
+    cpuGauge.border.style.fg = borderColor
+    memGauge.border.style.fg = borderColor
+    networkBox.border.style.fg = borderColor
     cpuLine.canvasSize.width -= 12 // workaround to avoid overflowing the X labels
 
     // Create container detail view
     var containerDetailBox = upperGrid.get(0, 1)
+    containerDetailBox.border.style.fg = borderColor
 
     // Create container list
     var containersTable = upperGrid.get(0, 0)
@@ -150,6 +182,10 @@ parse(function (containers) {
             screen.render()
         })
     })
+    containersTable.border.style.fg = borderColor  // override blessed-contrib border color (cyan)
+    containersTable.rows.style.item.fg = "default" // override blessed-contrib item color (green)
+    containersTable.style.fg = "cyan"              // override blessed-contrib headers color (fg)
+    containersTable.style.bold = true              // override blessed-contrib headers style
     containersTable.focus()
 
     // Key bindings
