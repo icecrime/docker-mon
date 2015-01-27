@@ -26,7 +26,7 @@ CPUPercentageLine = function (lineWidget) {
 }
 
 CPUPercentageLine.prototype.update = function (statItem) {
-    var maxDataPoints = 10
+    var maxDataPoints = 60
     if (this.x.length > maxDataPoints) {
         this.x.shift();
     }
@@ -35,7 +35,8 @@ CPUPercentageLine.prototype.update = function (statItem) {
     }
 
     var cpuPercent = calculateCPUPercent(statItem, this.previousCpu, this.previousSystem)
-    this.x.push(moment(statItem.read).format("HH:mm:ss"))
+    //this.x.push(moment(statItem.read).format("HH:mm:ss"))
+    this.x.push(' ')
     this.y.push(cpuPercent)
 
     this.previousCpu = statItem.cpu_stats.cpu_usage.total_usage
