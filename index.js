@@ -8,7 +8,9 @@ var cli     = require('cli'),
 
     blessed  = require('blessed'),
     contrib  = require('blessed-contrib'),
-    screen   = blessed.screen();
+    screen   = blessed.screen(),
+
+    _ = require('lodash');
 
 // enable status
 cli.enable('status');
@@ -160,18 +162,33 @@ parse(function (containers) {
     // Create container list
     var containersTable = upperGrid.get(0, 0)
 
-    // rudimentary updating of "Running Containers" list
-    setInterval(function(){
+    // debounce call to containers endpoint because many events can happen at
+    // "once"
+    var updateContainers = _.debounce(function(){
         utils.GetAllContainers(host, function (err, containers){
-            if(err) return;
+            if(err) throw err;
             containersTable.setData({
                 headers: ["ID", "Names", "Image"],
                 data: containers.map(function (el) {
                     return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
                 })
             })
+            // If we don't render, you have to take action in the terminal for the
+            // screen to re-render the current containers.
+            screen.render()
         })
-    }, 1000)
+    }, 200)
+
+    // listen to events api to update "Running Containers" list
+    request({
+        json:   true,
+        method: 'GET',
+        uri:    host + '/events'
+    })
+        .on('data', function(data){
+            // we don't care about data, just that something happened
+            updateContainers();
+        })
     
     containersTable.setData({
         headers: ["ID", "Names", "Image"],

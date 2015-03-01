@@ -21,6 +21,7 @@
     "blessed-contrib": "0.0.4",
     "cli": "^0.6.5",
     "humanize": "0.0.9",
+    "lodash": "^3.3.1",
     "mime-db": "1.5.0",
     "moment": "2.9.0",
     "request": "^2.51.0"
