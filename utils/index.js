@@ -3,16 +3,15 @@
 // dependencies
 var path     = require('path'),
     request  = require('request'),
-    stream   = require('stream'),
-    util     = require('util'),
-    Writable = stream.Writable;
+    // container connections
+    ccs = [];
 
 // function to get all containers
 function GetAllContainers(host, func) {
     request({
         json:   true,
         method: 'GET',
-        uri:    host + '/containers/json?all=1'
+        uri:    host + '/containers/json'
     }, function (err, resp, body) {
         var containers = [];
 
@@ -28,7 +27,6 @@ function GetAllContainers(host, func) {
             return func(new Error("You have no containers currently.", containers))
         }
 
-        var containers
         body.forEach(function(el) {
             containers.push(el)
         });
@@ -37,42 +35,19 @@ function GetAllContainers(host, func) {
     });
 };
 
-function StatsStream(el, statsCb, options) {
-    // allow use without new operator
-    if (!(this instanceof StatsStream)) {
-        return new StatsStream(el, options);
-    }
-
-    Writable.call(this, options);
-    this.el      = el;
-    this.statsCb = statsCb
-};
-util.inherits(StatsStream, Writable);
-StatsStream.prototype._write = function (chunk, enc, cb) {
-        chunk = chunk.toString();
-        try {
-            chunk = JSON.parse(chunk);
-        } catch (e) {
-            console.log(chunk, "is not JSON");
-            return cb();
-        }
-
-        this.statsCb(chunk);
-        return cb();
-};
-
-function GetStats(host, containerID, statsCb) {
-    var sstream = new StatsStream(containerID, statsCb);
-
-    sstream.on('finish', function () {
-        console.log('finished writing for', containerID);
-    });
-
-    request({
-        json:   true,
-        method: 'GET',
-        uri:    host + '/containers/' + containerID + '/stats'
-    }).pipe(sstream);
+function GetStats(host, containerID, statsCB) {
+  ccs.map(function(e){
+    e.destroy();
+    ccs.pop();
+  })
+  ccs.push(request({
+    json:   true,
+    method: 'GET',
+    uri:    host + '/containers/' + containerID + '/stats'
+  })
+           .on('data', function(data){
+             statsCB(JSON.parse(data))
+           }))
 };
 
 exports.GetAllContainers = GetAllContainers;

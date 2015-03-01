@@ -159,24 +159,43 @@ parse(function (containers) {
 
     // Create container list
     var containersTable = upperGrid.get(0, 0)
+
+    // rudimentary updating of "Running Containers" list
+    setInterval(function(){
+        utils.GetAllContainers(host, function (err, containers){
+            if(err) return;
+            containersTable.setData({
+                headers: ["ID", "Names", "Image"],
+                data: containers.map(function (el) {
+                    return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
+                })
+            })
+        })
+    }, 1000)
+    
     containersTable.setData({
         headers: ["ID", "Names", "Image"],
         data: containers.map(function (el) {
             return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
         })
     })
-    containersTable.rows.on("select", function (item) {
-        // Get container data, update detail view
-        var containerData = containers[containersTable.rows.getItemIndex(item)]
-        fetchContainerDetails(containerData.Id, containerDetailBox)
-
-        // Clear graphs and start collecting container stats
         var elements = [
             new widgets.CPUPercentageLine(cpuLine),
             new widgets.CPUGauge(cpuGauge),
             new widgets.MEMGauge(memGauge),
             new widgets.NetworkIO(networkBox)
         ]
+    containersTable.rows.on("select", function (item) {
+        // Get container data, update detail view
+        var containerData = containers[containersTable.rows.getItemIndex(item)]
+        fetchContainerDetails(containerData.Id, containerDetailBox)
+
+        // Clear graphs and start collecting container stats
+        elements.map(function(e){
+            if(typeof e.clear == 'function' || false){
+                e.clear()
+            }
+        })
         utils.GetStats(host, containerData.Id, function (statItem) {
             elements.map(function (el) { el.update(statItem) })
             screen.render()

@@ -12,6 +12,11 @@ CPUGauge = function (gaugeWidget) {
     this.previousSystem = 0.0
 }
 
+CPUGauge.prototype.clear = function(){
+    this.previousCpu    = 0.0
+    this.previousSystem = 0.0
+}
+
 CPUGauge.prototype.update = function (statItem) {
     var cpuPercent = cpu.calculateCPUPercent(statItem, this.previousCpu, this.previousSystem)
     this.gauge.setPercent(Math.round(cpuPercent))
