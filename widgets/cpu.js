@@ -9,7 +9,11 @@ calculateCPUPercent = function(statItem, previousCpu, previousSystem) {
     if (systemDelta > 0.0 && cpuDelta > 0.0) {
         cpuPercent = (cpuDelta / systemDelta) * statItem.cpu_stats.cpu_usage.percpu_usage.length * 100.0
     }
-    return cpuPercent
+    if(cpuPercent < 150){
+        return cpuPercent
+    } else {
+        return 0;
+    }
 }
 
 CPUPercentageLine = function (lineWidget) {
@@ -25,6 +29,13 @@ CPUPercentageLine = function (lineWidget) {
     this.previousSystem = 0.0
 }
 
+CPUPercentageLine.prototype.clear = function(){
+    this.x              = []
+    this.y              = []
+//    this.previousCpu    = 0.0
+//    this.previousSystem = 0.0
+}
+
 CPUPercentageLine.prototype.update = function (statItem) {
     var maxDataPoints = 60
     if (this.x.length > maxDataPoints) {
@@ -36,9 +47,12 @@ CPUPercentageLine.prototype.update = function (statItem) {
 
     var cpuPercent = calculateCPUPercent(statItem, this.previousCpu, this.previousSystem)
     //this.x.push(moment(statItem.read).format("HH:mm:ss"))
-    this.x.push(' ')
-    this.y.push(cpuPercent)
-
+  this.y.push(cpuPercent)
+  this.x = [];
+  for (var i = 0; i <= this.y.length; i++) {
+    this.x.push(i-1);
+  }
+  this.x = this.x.reverse().map(function(n){return n.toString()})
     this.previousCpu = statItem.cpu_stats.cpu_usage.total_usage
     this.previousSystem = statItem.cpu_stats.system_cpu_usage
 

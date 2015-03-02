@@ -8,7 +8,9 @@ var cli     = require('cli'),
 
     blessed  = require('blessed'),
     contrib  = require('blessed-contrib'),
-    screen   = blessed.screen();
+    screen   = blessed.screen(),
+
+    _ = require('lodash');
 
 // enable status
 cli.enable('status');
@@ -159,24 +161,58 @@ parse(function (containers) {
 
     // Create container list
     var containersTable = upperGrid.get(0, 0)
+
+    // debounce call to containers endpoint because many events can happen at
+    // "once"
+    var updateContainers = _.debounce(function(){
+        utils.GetAllContainers(host, function (err, containers){
+            if(err) throw err;
+            containersTable.setData({
+                headers: ["ID", "Names", "Image"],
+                data: containers.map(function (el) {
+                    return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
+                })
+            })
+            // If we don't render, you have to take action in the terminal for the
+            // screen to re-render the current containers.
+            screen.render()
+        })
+    }, 200)
+
+    // listen to events api to update "Running Containers" list
+    request({
+        json:   true,
+        method: 'GET',
+        uri:    host + '/events'
+    })
+        .on('data', function(data){
+            // we don't care about data, just that something happened
+            updateContainers();
+        })
+    
     containersTable.setData({
         headers: ["ID", "Names", "Image"],
         data: containers.map(function (el) {
             return [el.Id.substr(0, 8), el.Names.join(", "), el.Image]
         })
     })
-    containersTable.rows.on("select", function (item) {
-        // Get container data, update detail view
-        var containerData = containers[containersTable.rows.getItemIndex(item)]
-        fetchContainerDetails(containerData.Id, containerDetailBox)
-
-        // Clear graphs and start collecting container stats
         var elements = [
             new widgets.CPUPercentageLine(cpuLine),
             new widgets.CPUGauge(cpuGauge),
             new widgets.MEMGauge(memGauge),
             new widgets.NetworkIO(networkBox)
         ]
+    containersTable.rows.on("select", function (item) {
+        // Get container data, update detail view
+        var containerData = containers[containersTable.rows.getItemIndex(item)]
+        fetchContainerDetails(containerData.Id, containerDetailBox)
+
+        // Clear graphs and start collecting container stats
+        elements.map(function(e){
+            if(typeof e.clear == 'function' || false){
+                e.clear()
+            }
+        })
         utils.GetStats(host, containerData.Id, function (statItem) {
             elements.map(function (el) { el.update(statItem) })
             screen.render()
