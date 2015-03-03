@@ -25,6 +25,12 @@ If you feel like building it yourself:
 - Pick a container from the upper left list and press `enter` to retrieve its information
 - The `j` and `k` keys are currently used to scroll the `inspect` output in the upper right box
 
+# Installing
+
+You can also install docker-mon directly on your system (not in a container) using npm
+
+    npm install -g docker-mon
+
 # Contributing
 
 Feel like contributing? Great! Here's a few things that I think would be interesting:
